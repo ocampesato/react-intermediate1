@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>ReactJS and JSON-Server</title>
+
+  <script src="https://fb.me/react-0.14.3.js"></script>
+  <script src="https://fb.me/react-dom-0.14.3.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js">
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.js">
+  </script>
+
+  <style>
+    .inp {
+      float:right;
+      width: 40%;
+    } 
+    .lside {
+      float:left;
+      width: 40%;
+      text-align:left;
+      margin-right:5px; 
+    } 
+    fieldset { 
+      width: 30%;
+    } 
+  </style>
+ </head>
+ 
+ <body>
+  <h2>List of Employees</h2>
+  <div id="postdetails"></div>
+  
+  <script type="text/babel">
+   class UserInfo extends React.Component {
+     constructor() {
+        super();
+     }
+
+     componentWillMount() {
+       this.state = { loading: true, error: null, data: null, 
+                      currId : 300, incr : 100 };
+     }
+
+     loadInitialData() {
+       $.getJSON("http://localhost:4000/employees").then(
+         value => this.setState({loading: false, data: value}),
+         error => this.setState({loading: false, error: error}).bind(this));
+     }
+
+     postNewData() {
+        var newempid = this.refs.newempid.value;
+        var newFName = this.refs.newfname.value;
+        var newLName = this.refs.newlname.value;
+        var newNotes = this.refs.newnotes.value;
+
+        if((newempid != "") && (newFName != "") && 
+           (newLName != "") && (newNotes != "")) {
+          var postNewUser = {id:newempid,
+                             fname:newFName,
+                             lname:newLName,
+                             notes:newNotes};
+ 
+          $.post("http://localhost:4000/employees",
+             postNewUser,
+             function(result, textStatus, jqXHR) {
+//console.log("2returned result: "+JSON.stringify(result)); 
+                var currData = this.state.data;
+                currData.push(result); 
+                this.setState({data: currData}); 
+             }.bind(this),"json")
+              .fail(function(jqXHR, textStatus, errorThrown) {
+console.log("error: "+errorThrown); 
+             });
+ 
+          this.setState({currId: newempid}); 
+          this.render();
+        } else { 
+          alert("All fields are required");
+        }
+     }
+
+     componentDidMount() {
+       this.loadInitialData();
+     }
+   
+     render() {
+       if (this.state.loading) {
+         return <span>Loading...</span>;
+       }
+       else if (this.state.error !== null) {
+         return <span>Error: {this.state.error.message}</span>;
+       }
+       else {
+         let userPosts = this.state.data.map( post => {
+           return <tr key={post.id}> 
+                    <td>{post.id}</td> 
+                    <td>{post.fname}</td> 
+                    <td>{post.lname}</td>
+                  </tr> 
+         }) 
+
+         return (
+           <div>
+            <form>
+             <fieldset> 
+              <label className="lside" htmlFor="newempid">Employee ID:</label>
+              <input className="inp" id="newempid" ref="newempid" type="text"/>
+
+              <label className="lside" htmlFor="newfname">First Name:</label>
+              <input className="inp" id="newfname" ref="newfname" type="text"/>
+
+              <label className="lside" htmlFor="newlname">Last Name:</label>
+              <input className="inp" id="newlname" ref="newlname" type="text"/>
+
+              <label className="lside" htmlFor="newnotes">Extra Notes:</label>
+              <input className="inp" id="newnotes" ref="newnotes" type="text"/>
+
+              <button onClick={this.postNewData.bind(this)}>Add User</button>
+             </fieldset>
+            </form>
+
+            <table>
+               <thead>
+                 <th>EMPID</th>
+                 <th>TITLE</th>
+                 <th>AUTHOR</th>
+               </thead>
+               <tbody>
+                 {userPosts}
+               </tbody>
+            </table>
+           </div>
+         )
+       }
+     }
+   }
+
+   ReactDOM.render(
+     <UserInfo />,
+     document.getElementById("postdetails")
+   );
+  </script>
+ </body>
+</html>
+

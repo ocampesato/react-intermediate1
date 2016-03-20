@@ -1,0 +1,18 @@
+
+* JavaScript topics:
+  + ES6 functions
+  + Promises
+  + Observables
+
+Exercises:
+* JSONServerGET 
+* JSONServerPOST
+* JSONServerFORM
+* JSONServerTable
+* routing/tabs 
+[myown-json-server]
+
+demonstrate:
+* MERN 
+* JSONServerSVG
+

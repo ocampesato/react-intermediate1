@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+ <head>
+   <meta charset="utf-8">
+   <title>ReactJS and User List</title>
+
+   <script src="https://fb.me/react-0.14.3.js"></script>
+   <script src="https://fb.me/react-dom-0.14.3.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js">
+   </script>
+   <script src="https://cdn.firebase.com/js/client/2.4.1/firebase.js"></script>
+ </head>
+ 
+ <body>
+    <p>User List</p>
+    <div id="container"></div>
+
+    <script type="text/babel">
+     class UserList extends React.Component {
+       constructor() {
+         super();
+
+         this.FB1 = new Firebase('https://oswald1.firebaseio.com/');
+         this.FB2 = new Firebase('https://oswald1.firebaseio.com/userList');
+
+         // remove current user data:
+       //this.FB2.remove(); 
+         this.getUsersFromFirebase();
+
+         this.addUser = this.addUser.bind(this); 
+       }
+
+       getUsersFromFirebase () {
+         var self = this;
+
+         //----------------------------------------------------- 
+         // STEP #1: Asynchronous callback to read userList data 
+         //----------------------------------------------------- 
+         this.FB2.on("value", function(snapshot) {
+           var userObj  = snapshot.val();
+           console.log("Retrieved FB2 data: "+JSON.stringify(userObj));
+
+           //-------------------------------------------------- 
+           // STEP #2: convert JSON object to an array of items 
+           //-------------------------------------------------- 
+           self.userList = [];
+           for(var item in userObj){
+             if(userObj[item]["fname"] != null) {
+               self.userList.push(userObj[item]["fname"]);
+             } else { 
+               self.userList.push(userObj[item]);
+             } 
+           } 
+         //self.userList = JSON.stringify(userObj);
+
+           console.log("Converted to array: "+JSON.stringify(self.userList));
+         }, function (errorObject) {
+           console.log("The FB2 read failed: " + errorObject.code);
+         });
+         
+         //----------------------------------------------------- 
+         // STEP #3: if list is empty then save hard-coded list
+         //----------------------------------------------------- 
+         if(this.userList == null) {
+            console.log("Saving initial data to Firebase");
+            this.userListRef = this.FB1.child("userList");
+   
+            this.userList = [
+              { fname: "Sara" },
+              { fname: "Dave" },
+              { fname: "John" },
+              { fname: "Miko" }
+            ];
+
+            this.userListRef.set(
+              this.userList, function(error) {
+                if (error) {
+                  console.log("userList could not be saved: " + error);
+                } else {
+                  console.log("userList saved successfully.");
+                }
+              });
+
+            console.log("Initialized userList: "+this.userList);
+         }
+
+         console.log("length of userList: "+this.userList.length);
+       }
+
+       componentDidMount() {
+         this.setState({user: ""}); 
+       }  
+
+       addUser() {
+         var user = this.refs.user.value;
+         console.log("2user = "+user); 
+         this.setState({user: user}); 
+         this.userList.push(user);
+
+         console.log("Saving this.userList to Firebase: "+JSON.stringify(this.userList));
+         this.saveUsersFirebase();
+       }  
+
+       saveUsersFirebase() {
+          console.log('before FB save this.userList = '+this.userList);
+
+          var self = this;
+          this.FB2.set(self.userList, function(error) {
+            if (error) {
+              console.log('Array Synchronization failed: '+error);
+            } else {
+              console.log('Array Synchronization succeeded:');
+              console.log('self.userList: '+self.userList);
+            }
+          });
+       }  
+
+       render() {
+         return (
+            <div>
+              <ul>
+                <ListOptions options={this.userList} />
+              </ul>
+              <input ref="user" type="text" />
+              <button onClick={this.addUser}>Add User</button>
+            </div>
+         ) 
+       }
+    }
+    
+    class ListOptions extends React.Component {
+      render() {
+         return (
+          <div>
+            {this.props.options.map(function(option, index) {
+              return (
+                <li key={index}>{option}</li>
+              ) 
+           })}
+          </div>
+         ) 
+      }
+    }
+
+    ReactDOM.render(
+      <UserList/>,
+      document.getElementById('container')
+    )
+   </script>
+ </body>
+</html>
+ 

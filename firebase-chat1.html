@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Firebase Chat Application</title>
+  <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+ </head>
+
+ <body>
+  <script src="https://cdn.firebase.com/js/client/1.0.6/firebase.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+  <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+
+  <div class="container">
+    <h1>Firebase Chat Application</h1>
+ 
+    <div class="panel panel-default">
+        <div class="panel-body"></div>
+        <div class="panel-footer">
+          <form role="form">
+            <div class="form-group">
+                <label for="comments">Please enter your comments here</label>
+                <input class="form-control" id="comments" name="comments">
+            </div>
+   
+            <button type="submit" id="submit-btn" name="submit-btn"
+                class="btn btn-primary">Send Comments</button>
+   
+            <button type="reset" class="btn btn-default">Clear Comments</button>
+          </form>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    var ref = new Firebase('https://c1vb0zrcze9.firebaseio-demo.com/');
+
+    $("#submit-btn").bind("click", function(event) {
+       var comment = $("#comments");
+       var commentValue = $.trim(comment.val());
+     
+       if (commentValue.length === 0) {
+          alert('Comments are required to continue');
+          console.log('Comments are required to continue');
+       } else {
+         ref.push({comment: commentValue}, function(error) {
+            if (error !== null) {
+              alert('Unable to push comments to Firebase');
+              console.log('Unable to push comments to Firebase');
+            } else {
+              console.log('Saved comments to Firebase');
+            }
+         });
+       } 
+
+       return false;
+    });
+
+  </script>
+ </body>
+</html>
+

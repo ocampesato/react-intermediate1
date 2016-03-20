@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>Write/Read Data in Firebase</title>
+
+  <link rel="stylesheet" 
+    href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+   
+   <style>
+     .container { max-width: 600px; }
+      
+     #comments-container {
+         border: 1px solid #d0d0d0;
+         height: 200px;
+         overflow-y: scroll;
+     }
+      
+     .comment-container {
+         padding: 10px;
+         margin:6px;
+         background: #f5f5f5;
+         font-size: 13px;
+         -moz-border-radius: 5px;
+         -webkit-border-radius: 5px;
+         border-radius: 5px;
+     }
+      
+     .comment-container .label { margin-right: 20px; }
+
+     .comment-container:last-of-type { border-bottom: none; }
+   </style>
+ </head>
+
+ <body>
+  <script src="https://cdn.firebase.com/js/client/1.0.6/firebase.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js">
+  </script>
+  <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js">
+  </script>
+
+  <div class="container pull-left">
+    <h3>Firebase Write/Read Data</h3>
+ 
+    <!-- append all comments to this <div> -->
+    <div id="comments-container"></div>
+
+    <div class="panel panel-default">
+      <div class="panel-body"></div>
+       <div class="panel-footer">
+        <form role="form">
+          <div class="form-group">
+            <label for="comments">Enter your comments here</label>
+            <input class="form-control" id="comments" name="comments">
+          </div>
+ 
+          <button type="submit" id="submit-btn" name="submit-btn"
+                  class="btn btn-primary btn-sm">Send</button>
+ 
+          <button type="submit" id="array-btn" name="array-btn"
+                  class="btn btn-sm">Save Array</button>
+ 
+          <button type="submit" id="append-btn" name="append-btn"
+                  class="btn btn-sm">Append</button>
+ 
+          <button id="reset-btn" type="reset" class="btn btn-default btn-sm">
+             Delete 
+          </button>
+        </form>
+       </div>
+     </div>
+   </div>
+
+  <script>
+    //--------------------------------------------------------
+    // This web page shows you how to perform the following:
+    // 1) Reference a FB location via a Firebase constructor
+    // 2) Write data to Firebase by using the "push" method
+    // 3) Read data from Firebase by specifying two things:
+    // a) the 'on' method and b) the event type "child_added"
+    //--------------------------------------------------------
+
+    // get a reference to an existing Firebase database
+    // [you can replace this URL with your own database]
+    var ref = new Firebase('https://c1vb0zrcze9.firebaseio-demo.com/');
+
+    // save the comment when users click the 'submit' button 
+    $("#submit-btn").bind("click", function(event) {
+      var comment = $("#comments");
+      var commentValue = $.trim(comment.val());
+    
+      // save only comments with non-zero length
+      if (commentValue.length === 0) {
+         alert('Comments cannot be empty');
+         console.log('Comments cannot be empty');
+      } else {
+         // save the comment to the Firebase database 
+         ref.push({comment: commentValue}, function(error) {
+           // did an error occur during the save operation? 
+           if (error !== null) {
+               alert('Unable to push comments to Firebase');
+               console.log('Unable to push comments to Firebase');
+               console.log("the error = "+error);
+           } else {
+               console.log('Saved comment to Firebase: '+commentValue);
+           }
+         });
+      } 
+
+      return false;
+    });
+
+    // save an array in the Firebase database 
+    $("#array-btn").bind("click", function(event) {
+      var users = [{fname:'John', lname:'Smith', gitacct:'jsmith'},
+                   {fname:'Jane', lname:'Jones', gitacct:'jjones'},
+                   {fname:'Dave', lname:'Train', gitacct:'dtrain'}];
+
+      ref.push(users, function(error) {
+        if (error) {
+          console.log('Array Synchronization failed: '+error);
+        } else {
+          console.log('Array Synchronization succeeded');
+        }
+      });
+    });
+
+    // append a string in the Firebase database 
+    $("#append-btn").bind("click", function(event) {
+console.log("appending foo/bar");
+        // this new and empty ref only exists locally
+        var newChildRef = ref.push();
+
+        // we can get its id using name()
+        console.log('new id = '+newChildRef.name());
+
+        // now it is appended at the end of data at the server
+        newChildRef.set({foo: 'bar'});
+    });
+
+    // remove everything in the Firebase database 
+    $("#reset-btn").bind("click", function(event) {
+      ref.remove(function(error) {
+        if (error) {
+          console.log('Delete Synchronization failed');
+        } else {
+          console.log('Delete Synchronization succeeded');
+          $('#comments-container').html("");
+        }
+      });
+    });
+
+    // synchronize data from server
+    var fullList = [];
+    ref.on('value', function(snap) { 
+      fullList = snap.val(); 
+      console.log('Received Array = '+JSON.stringify(fullList));
+
+      for(key in fullList) {
+       //console.log("key = "+key+ " value = "+fullList[key]);
+         var innerList = fullList[key];
+         for(key2 in innerList) {
+          //console.log("value for key2 = "+JSON.stringify(innerList[key2]));
+            var user = innerList[key2];
+            var userData = "fname = "+user['fname']+
+                           " lname = "+user['lname']+
+                           " gitacct = "+user['gitacct'];
+
+            $('<div/>', {class: 'comment-container'})
+              .html('<span class="label label-info">USER '+userData+'</span>')
+              .appendTo(commentsContainer);
+  
+            var commentsContainer = $('#comments-container');
+            commentsContainer.scrollTop(commentsContainer.prop('scrollHeight'));
+
+            console.log("fname = "+user['fname']+
+                        " lname = "+user['lname']+
+                        " gitacct = "+user['gitacct']);
+         }
+      } 
+    });
+
+    // a handler that is invoked whenever new data is added to Firebase 
+    ref.on('child_added', function(snapshot) {
+     var uniqName = snapshot.name();
+     var comment = snapshot.val().comment;
+
+     console.log("Received child_added comment: "+comment);
+     console.log("Received child_added uniqName: "+uniqName);
+
+     if(comment == "undefined") {
+       console.log("Skipping 'undefined' comment");
+     } else {
+       var commentsContainer = $('#comments-container');
+  
+       //-------------------------------------------------------------
+       // perform the following steps to display the new comment:
+       // step 1: create a new <div> with the value of "comment"
+       // step 2: append the new <div> to the commentsContainer <div>
+       //-------------------------------------------------------------
+       $('<div/>', {class: 'comment-container'})
+        .html('<span class="label label-info">Comment '+uniqName+'</span>'+comment)
+        .appendTo(commentsContainer);
+  
+       commentsContainer.scrollTop(commentsContainer.prop('scrollHeight'));
+    }
+   });
+  </script>
+ </body>
+</html>
+

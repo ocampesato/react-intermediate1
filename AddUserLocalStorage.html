@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+ <head>
+   <meta charset="utf-8">
+   <title>ReactJS and User List</title>
+
+   <script src="https://fb.me/react-0.14.3.js"></script>
+   <script src="https://fb.me/react-dom-0.14.3.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js">
+   </script>
+ </head>
+ 
+ <body>
+    <p>User List</p>
+    <div id="container"></div>
+
+    <script type="text/babel">
+     class UserList extends React.Component {
+       constructor() {
+         super();
+
+         this.getUsersFromLocalStorage();
+         this.addUser = this.addUser.bind(this); 
+       }
+
+       //----------------------------------------------------
+       // if you save an item without using JSON.stringify()
+       // you must delete that data item with 'removeItem'
+       // and then save it with the JSON.stringify() function
+       //----------------------------------------------------
+       //localStorage.removeItem('users');
+
+       getUsersFromLocalStorage() {
+         this.userList = JSON.parse(localStorage.getItem('users'));
+         console.log("found local storage userList: "+this.userList);
+
+         if(this.userList == null) {
+           this.userList = [
+                  'Sara', 'Dave', 'John', 'Sally'
+           ];
+
+           console.log("initialized userList: "+this.userList);
+         }
+
+         console.log("length of userList: "+this.userList.length);
+       }
+
+       componentDidMount() {
+         this.setState({user: ""}); 
+       }  
+
+       addUser() {
+         var user = this.refs.user.value;
+         console.log("2user = "+user); 
+         this.setState({user: user}); 
+         this.userList.push(user);
+
+         console.log("saving this.userList to local storage");
+         this.saveUsersLocalStorage();
+       }  
+
+       saveUsersLocalStorage() {
+          localStorage.setItem('users', JSON.stringify(this.userList));
+       }  
+
+       render() {
+         return (
+            <div>
+              <ul>
+                <ListOptions options={this.userList} />
+              </ul>
+              <input ref="user" type="text" />
+              <button onClick={this.addUser}>Add User</button>
+            </div>
+         ) 
+       }
+    }
+    
+    class ListOptions extends React.Component {
+      render() {
+         return (
+          <div>
+            {this.props.options.map(function(option) {
+              return (
+                <li key={option}>{option}</li>
+              ) 
+           })}
+          </div>
+         ) 
+      }
+    }
+
+    ReactDOM.render(
+      <UserList/>,
+      document.getElementById('container')
+    )
+   </script>
+ </body>
+</html>
+ 

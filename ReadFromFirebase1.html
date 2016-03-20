@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Read Data from Firebase</title>
+
+  <link rel="stylesheet" 
+    href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+ </head>
+
+ <body>
+  <script src="https://cdn.firebase.com/js/client/1.0.6/firebase.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js">
+  </script>
+  <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js">
+  </script>
+
+  <div class="container">
+    <h3>Firebase Chat Application</h3>
+ 
+    <div class="panel panel-default">
+        <div class="panel-body"></div>
+        <div class="panel-footer">
+          <form role="form">
+            <div class="form-group">
+              <label for="comments">Please enter your comments here</label>
+              <input class="form-control" id="comments" name="comments">
+            </div>
+   
+            <button type="submit" id="submit-btn" name="submit-btn"
+                    class="btn btn-primary">Send Comments</button>
+   
+            <button type="reset" class="btn btn-default">Clear Comments</button>
+          </form>
+        </div>
+    </div>
+  </div>
+
+  <script>
+/*
+The "eventType" argument has the following options: 
+* "value": will be triggered once, and reads all comments, 
+           and every time any comments change it will be 
+           triggered again, as well as read all the comments.
+
+* "child_added":  triggered once for each comment, as well 
+                  as each time a new comment is added.
+
+* "child_removed": triggered any time a comment is removed.
+* "child_changed": triggered any time a comment is changed.
+* "child_moved":   triggered any time a comment's order is changed.
+*/
+
+    var ref = new Firebase('https://c1vb0zrcze9.firebaseio-demo.com/');
+
+    $("#submit-btn").bind("click", function(event) {
+       var comment = $("#comments");
+       var commentValue = $.trim(comment.val());
+     
+       if (commentValue.length === 0) {
+          alert('Comments are required to continue');
+          console.log('Comments are required to continue');
+       } else {
+         ref.push({comment: commentValue}, function(error) {
+            if (error !== null) {
+              alert('Unable to push comments to Firebase');
+              console.log('Unable to push comments to Firebase');
+            } else {
+              console.log('Saved comment to Firebase: '+commentValue);
+            }
+         });
+       } 
+
+       return false;
+    });
+
+    ref.on('child_added', function(snapshot) {
+      var uniqName = snapshot.name();
+      var comment = snapshot.val().comment;
+      console.log("Received child_added comment: "+comment);
+    });
+  </script>
+ </body>
+</html>
+
